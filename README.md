@@ -20,13 +20,14 @@ Postman or curl.
 Usage: httpp [OPTIONS]
 
 Options:
-  -f, --file <FILE>  Read the request from a file
-      --curl         Convert the request to a curl command
-  -s, --status       Output the response status code
-  -H, --headers      Output the response headers
-  -b, --body         Output the response body
-  -h, --help         Print help
-  -V, --version      Print version
+  -f, --file <FILE>             Read the request from a file
+      --curl                    Convert the request to a curl command
+  -s, --status                  Output the response status code
+  -H, --headers                 Output the response headers
+  -b, --body                    Output the response body
+  -o, --output <OUTPUT_FORMAT>  Specify output format (json or text) [default: text]
+  -h, --help                    Print help
+  -V, --version                 Print version
 ```
 
 Some examples...
