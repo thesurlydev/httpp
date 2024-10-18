@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "method": {
+      "type": "string",
+      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      "description": "HTTP method to be used in the request"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Full URL of the resource"
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Key-value map of HTTP headers"
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Key-value map of query parameters"
+    },
+    "body": {
+      "oneOf": [
+        {
+          "type": "null",
+          "description": "Body is null for GET/DELETE requests"
+        },
+        {
+          "type": "object",
+          "description": "JSON object body for POST/PUT/PATCH requests"
+        }
+      ],
+      "description": "The request body, which can be null or a JSON object"
+    }
+  },
+  "required": ["method", "url"],
+  "additionalProperties": false
+}
