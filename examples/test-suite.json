@@ -1,0 +1,69 @@
+{
+  "name": "Surly.dev API Test Suite",
+  "base_url": "https://surly.dev",
+  "tests": [
+    {
+      "name": "Get Surly.dev Homepage",
+      "request": {
+        "method": "GET",
+        "url": "/",
+        "headers": {
+          "User-Agent": "SurlyTestBot/1.0"
+        },
+        "query": {}
+      },
+      "expected_response": {
+        "status_code": 200,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8"
+        },
+        "body": null
+      },
+      "predicates": [
+        {
+          "description": "Check if response time is under 1 second",
+          "rule": "response.time < 1000",
+          "behavior": "warn if exceeded"
+        },
+        {
+          "description": "Verify that the response body contains 'Surly'",
+          "rule": "response.body.includes('Surly')",
+          "behavior": "fail if not found"
+        },
+        {
+          "description": "Check if the response body size is reasonable",
+          "rule": "response.body.length < 100000",
+          "behavior": "log if exceeded"
+        }
+      ]
+    },
+    {
+      "name": "Get Non-existent Page",
+      "request": {
+        "method": "GET",
+        "url": "/non-existent-page",
+        "headers": {
+          "User-Agent": "SurlyTestBot/1.0"
+        },
+        "query": {}
+      },
+      "expected_response": {
+        "status_code": 404,
+        "headers": {
+          "Content-Type": "text/html; charset=utf-8"
+        },
+        "body": null
+      },
+      "predicates": [
+        {
+          "description": "Verify that the response body contains '404'",
+          "rule": "response.body.includes('404')",
+          "behavior": "fail if not found"
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "BASE_URL": "https://surly.dev"
+  }
+}

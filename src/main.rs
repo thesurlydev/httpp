@@ -19,6 +19,13 @@ struct Args {
     include_headers: bool,
     #[arg(short = 'b', long = "body", help = "Output the response body")]
     include_body: bool,
+    #[arg(
+        short = 'o',
+        long = "output",
+        help = "Specify output format (json or text)",
+        default_value = "text"
+    )]
+    output_format: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -29,6 +36,13 @@ struct HttpRequest {
     headers: HashMap<String, String>,
     #[serde(default)]
     query: HashMap<String, String>,
+    body: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+struct JsonOutput {
+    status: Option<u16>,
+    headers: Option<HashMap<String, String>>,
     body: Option<serde_json::Value>,
 }
 
@@ -45,11 +59,9 @@ fn read_input(file_path: Option<String>) -> Result<String, Box<dyn std::error::E
 
 fn generate_curl_command(request: &HttpRequest) -> String {
     let mut cmd = format!("curl -X {} ", request.method);
-
     for (key, value) in &request.headers {
         cmd.push_str(&format!("-H '{}:{}' ", key, value));
     }
-
     if !request.query.is_empty() {
         let query_string: Vec<String> = request
             .query
@@ -60,17 +72,20 @@ fn generate_curl_command(request: &HttpRequest) -> String {
     } else {
         cmd.push_str(&format!("'{}' ", request.url));
     }
-
     if let Some(body) = &request.body {
         cmd.push_str(&format!("-d '{}'", serde_json::to_string(body).unwrap()));
     }
-
     cmd
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
+
+    if args.output_format != "json" && args.output_format != "text" {
+        return Err("Invalid output format. Use 'json' or 'text'.".into());
+    }
+
     let input = read_input(args.file)?;
     let request: HttpRequest = serde_json::from_str(&input)?;
 
@@ -106,23 +121,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let response = req_builder.send().await?;
 
-    if args.include_status {
-        println!("{}", response.status().as_u16());
-    }
+    if args.output_format == "json" {
+        let mut json_output = JsonOutput {
+            status: None,
+            headers: None,
+            body: None,
+        };
 
-    if args.include_headers {
-        for (key, value) in response.headers() {
-            println!("{}: {}", key, value.to_str()?);
+        if args.include_status {
+            json_output.status = Some(response.status().as_u16());
         }
-    }
 
-    if args.include_body {
-        println!("");
-        let body = response.text().await?;
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
-            println!("{}", serde_json::to_string_pretty(&json)?);
-        } else {
-            println!("{}", body);
+        if args.include_headers {
+            let mut headers_map = HashMap::new();
+            for (key, value) in response.headers() {
+                headers_map.insert(key.to_string(), value.to_str()?.to_string());
+            }
+            json_output.headers = Some(headers_map);
+        }
+
+        if args.include_body {
+            let body = response.text().await?;
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
+                json_output.body = Some(json);
+            } else {
+                json_output.body = Some(serde_json::Value::String(body));
+            }
+        }
+
+        println!("{}", serde_json::to_string_pretty(&json_output)?);
+    } else {
+        if args.include_status {
+            println!("{}", response.status().as_u16());
+        }
+
+        if args.include_headers {
+            for (key, value) in response.headers() {
+                println!("{}: {}", key, value.to_str()?);
+            }
+        }
+
+        if args.include_body {
+            println!("");
+            let body = response.text().await?;
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
+                println!("{}", serde_json::to_string_pretty(&json)?);
+            } else {
+                println!("{}", body);
+            }
         }
     }
 

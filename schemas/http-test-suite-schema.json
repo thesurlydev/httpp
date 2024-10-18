@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["name", "base_url", "tests"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the test suite"
+    },
+    "base_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Base URL for the API"
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "request", "expected_response", "predicates"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the test"
+          },
+          "request": {
+            "$ref": "http-request-schema.json"
+          },
+          "expected_response": {
+            "type": "object",
+            "required": ["status_code"],
+            "properties": {
+              "status_code": {
+                "type": "integer",
+                "description": "Expected HTTP status code"
+              },
+              "headers": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Expected headers in the response"
+              },
+              "body": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "Expected JSON response body"
+                  },
+                  {
+                    "type": "null",
+                    "description": "Null body for responses without content"
+                  }
+                ]
+              }
+            }
+          },
+          "predicates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["description", "rule", "behavior"],
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "Description of the predicate"
+                },
+                "rule": {
+                  "type": "string",
+                  "description": "The rule to be evaluated"
+                },
+                "behavior": {
+                  "type": "string",
+                  "description": "The behavior to execute based on the rule evaluation"
+                }
+              }
+            },
+            "description": "Array of predicates for additional test assertions and behaviors"
+          }
+        }
+      }
+    },
+    "variables": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Variables that can be used in the tests"
+    }
+  }
+}
